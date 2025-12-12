@@ -1,0 +1,6 @@
+{
+  "watch": ["src"],
+  "ext": "ts",
+  "ignore": ["dist"],
+  "exec": "node --env-file=.env.dev -r ts-node/register src/index.ts"
+}

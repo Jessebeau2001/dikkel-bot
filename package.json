@@ -1,0 +1,33 @@
+{
+  "name": "dikkel-bot",
+  "version": "1.0.0",
+  "description": "Dikkel Discord bot",
+  "license": "ISC",
+  "author": "Jessebeau2001",
+  "main": "index.js",
+  "scripts": {
+    "dev": "nodemon",
+    "build": "esbuild src/index.ts --bundle --platform=node --outfile=dist/app.js",
+    "build:slim": "esbuild src/index.ts --bundle --minify --platform=node --outfile=dist/app.js"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.1",
+    "@types/node": "^24.10.2",
+    "@typescript-eslint/eslint-plugin": "^8.49.0",
+    "@typescript-eslint/parser": "^8.49.0",
+    "esbuild": "^0.27.1",
+    "eslint": "^9.39.1",
+    "globals": "^16.5.0",
+    "nodemon": "^3.1.11",
+    "prettier": "^3.7.4",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.49.0"
+  },
+  "dependencies": {
+    "axios": "^1.13.2",
+    "discord.js": "^14.25.1",
+    "jimp": "^1.6.0",
+    "zod": "^4.1.13"
+  }
+}
