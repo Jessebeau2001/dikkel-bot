@@ -75,6 +75,6 @@ export const chatInputCommandRouter = async (interaction: Interaction) => {
         await command.execute(interaction);
     } catch (error) {
         console.error(`An unexpected error occurred while handling command /${interaction.commandName}:`, error);
-        await contextAwareReply(interaction, ERROR_MESSAGE);
+        // await contextAwareReply(interaction, ERROR_MESSAGE);
     }
 };

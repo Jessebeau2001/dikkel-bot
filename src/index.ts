@@ -1,12 +1,11 @@
-import { AttachmentBuilder, Client, Events, GatewayIntentBits, Interaction, Message, MessageFlags, REST, Routes } from 'discord.js';
+import { AttachmentBuilder, Client, Events, GatewayIntentBits, Message } from 'discord.js';
 import { getMatchingEntries, analyzeMessage, fetchBufferFromUrl } from './service/face-detect.service';
 import { Jimp } from 'jimp';
 import { applyEllipsesToImage } from './service/jimp-helper';
 import { migrate } from './db';
-import { getGuildOptions } from './service/guildOptions.service';
-import setFaceFilterCommand from './commands/setFaceFilter';
 import { getEnvString } from './envHelper';
 import { chatInputCommandRouter, deployApplicationCommands } from './commands/commands';
+import setFaceFilterCommand from './commands/setFaceFilter';
 import arieCommand from './commands/arie';
 
 export const DISCORD_TOKEN = getEnvString('DISCORD_TOKEN');
@@ -21,9 +20,6 @@ const client = new Client({
 });
 
 const messageArieFilter = async (message: Message) => {
-	const id = message.guildId;
-	console.log(id);
-
 	if (message.author.bot) return;
 	if (message.attachments.size === 0) return;
 	
@@ -61,8 +57,10 @@ client.on(Events.MessageCreate, messageArieFilter);
 client.on(Events.InteractionCreate, chatInputCommandRouter);
 
 (async () => {
-	await migrate();
-	// await deployApplicationCommands([ setFaceFilterCommand, arieCommand ]);
+	if (process.env.NODE_ENV === 'dev') {
+		await migrate();
+		await deployApplicationCommands([ setFaceFilterCommand, arieCommand ]);
+	};
 	client.login(DISCORD_TOKEN);
 })();
 
