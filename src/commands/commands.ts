@@ -74,16 +74,15 @@ export const chatInputCommandRouter = async (interaction: Interaction) => {
 	if (!interaction.isChatInputCommand()) return;
 
     const command = getCommand(interaction.commandName);
-    if (command === undefined) {
-        console.error(`Received command with no matching handler: /${interaction.commandName}`);
-        await contextAwareReply(interaction, ERROR_MESSAGE);
-		return;
-    }
-
     try {
-        await command.execute(interaction);
+        if (command === undefined) {
+            console.error(`Received command with no matching handler: /${interaction.commandName}`);
+            await contextAwareReply(interaction, ERROR_MESSAGE);
+        } else {
+            await command.execute(interaction);
+        }
     } catch (error) {
         console.error(`An unexpected error occurred while handling command /${interaction.commandName}:`, error);
-        // await contextAwareReply(interaction, ERROR_MESSAGE);
+        await contextAwareReply(interaction, ERROR_MESSAGE);
     }
 };
