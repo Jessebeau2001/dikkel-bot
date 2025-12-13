@@ -4,17 +4,16 @@ import { Jimp } from 'jimp';
 import { applyEllipsesToImage } from './service/jimp-helper';
 import DbUser from './db/models/user.model';
 import { migrate } from './db';
+import GuildOptions from './db/models/guildOptions.model';
+import { createDefaultGuildOptions, getGuildOptions } from './service/guildOptions.service';
 
 (async () => {
 	await migrate();
+	// const created = await createDefaultGuildOptions('511285371003469824');
+	// console.log(created.get({ plain: true }));
+	const found = await getGuildOptions('511285371003469824');
+	console.log(found?.get({ plain: true }));
 
-	const test = await DbUser.findOne({
-		where: {
-			name: 'jesse'
-		}
-	});
-
-	if (test === null) return;
 })();
 
 const client = new Client({
@@ -26,6 +25,9 @@ const client = new Client({
 });
 
 const messageArieFilter = async (message: Message) => {
+	const id = message.guildId;
+	console.log(id);
+
 	if (message.author.bot) return;
 	if (message.attachments.size === 0) return;
 	
