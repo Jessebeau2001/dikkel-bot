@@ -2,6 +2,20 @@ import { AttachmentBuilder, Client, Events, GatewayIntentBits, Message } from 'd
 import { getMatchingEntries, analyzeMessage, fetchBufferFromUrl } from './service/face-detect.service';
 import { Jimp } from 'jimp';
 import { applyEllipsesToImage } from './service/jimp-helper';
+import DbUser from './db/models/user.model';
+import { migrate } from './db';
+
+(async () => {
+	await migrate();
+
+	const test = await DbUser.findOne({
+		where: {
+			name: 'jesse'
+		}
+	});
+
+	if (test === null) return;
+})();
 
 const client = new Client({
 	intents: [
