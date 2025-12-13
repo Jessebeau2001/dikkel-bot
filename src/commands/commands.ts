@@ -1,20 +1,26 @@
-import { CacheType, ChatInputCommandInteraction, Interaction, MessageFlags, REST, Routes, SlashCommandBuilder } from 'discord.js';
+import { CacheType, ChatInputCommandInteraction, Interaction, MessageFlags, REST, Routes, SharedSlashCommand } from 'discord.js';
 import { DISCORD_APP_ID, DISCORD_TOKEN } from '..';
 import setFaceFilterCommand from './setFaceFilter';
 import arieCommand from './arie';
+import censorModeCommand from './censorMode';
 
 const ERROR_MESSAGE = 'There was an unexpected error while executing this command!';
 const COMMAND_REGISTRY = new Map<string, CommandContainer>();
 const COMMANDS = [
     setFaceFilterCommand,
-    arieCommand
+    arieCommand,
+    censorModeCommand
 ];
 
 initCommands(COMMANDS);
 
 export interface CommandContainer {
-    data: SlashCommandBuilder,
+    data: SharedSlashCommand,
     execute: (interaction: ChatInputCommandInteraction) => Promise<void>;
+}
+
+export async function deployAllAppCommands(): Promise<void> {
+    await deployApplicationCommands(COMMANDS);
 }
 
 export async function deployApplicationCommands(commands: CommandContainer[]): Promise<void> {

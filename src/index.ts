@@ -4,9 +4,7 @@ import { Jimp } from 'jimp';
 import { applyEllipsesToImage } from './service/jimp-helper';
 import { migrate } from './db';
 import { getEnvString } from './envHelper';
-import { chatInputCommandRouter, deployApplicationCommands } from './commands/commands';
-import setFaceFilterCommand from './commands/setFaceFilter';
-import arieCommand from './commands/arie';
+import { chatInputCommandRouter, deployAllAppCommands } from './commands/commands';
 
 export const DISCORD_TOKEN = getEnvString('DISCORD_TOKEN');
 export const DISCORD_APP_ID = getEnvString('DISCORD_APP_ID');
@@ -59,7 +57,7 @@ client.on(Events.InteractionCreate, chatInputCommandRouter);
 (async () => {
 	if (process.env.NODE_ENV === 'dev') {
 		await migrate();
-		await deployApplicationCommands([ setFaceFilterCommand, arieCommand ]);
+		// await deployAllAppCommands();
 	};
 	client.login(DISCORD_TOKEN);
 })();

@@ -1,6 +1,6 @@
 // import GuildOptions from '@/db/models/guildOptions.model';
 import SimpleLRUCache from '../cache';
-import GuildOptions from '../db/models/guildOptions.model';
+import GuildOptions, { GuildOptionsUpdate } from '../db/models/guildOptions.model';
 import { UniqueConstraintError } from 'sequelize';
 
 // Could be moved to dal layer when logic gets more complex
@@ -20,7 +20,11 @@ export async function createDefaultGuildOptions(guildId: string): Promise<GuildO
     }
 
     try {
-        const created = await GuildOptions.create({ guildId });
+        const created = await GuildOptions.create({
+            guildId,
+            censorMode: 'none'
+        });
+
         return cache(created);
     } catch (err) {
         if (err instanceof UniqueConstraintError) {
@@ -36,4 +40,14 @@ export async function getGuildOptions(guildId: string) {
 
     const found = await GuildOptions.findByPk(guildId);
     return found !== null ? cache(found) : null;
+}
+
+export async function updateGuildOptions(guildId: string, update: GuildOptionsUpdate): Promise<GuildOptions> {
+    let options = await getGuildOptions(guildId);
+    if (options === null) options = await createDefaultGuildOptions(guildId);
+
+    // Damn really easy with sequelize - note this also instantly saves it
+    await options.update(update);
+
+    return cache(options);
 }
