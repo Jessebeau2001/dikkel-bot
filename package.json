@@ -8,7 +8,9 @@
   "scripts": {
     "dev": "nodemon",
     "build": "esbuild src/index.ts --bundle --platform=node --outfile=dist/app.js",
-    "build:slim": "esbuild src/index.ts --bundle --minify --platform=node --outfile=dist/app.js"
+    "build:slim": "esbuild src/index.ts --bundle --minify --platform=node --outfile=dist/app.js",
+    "deploy:dev": "node --env-file=.env.dev -r ts-node/register src/commands/run-deploy.ts",
+    "migrate:dev": "node --env-file=.env.dev -r ts-node/register src/db/run-migrate.ts"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",

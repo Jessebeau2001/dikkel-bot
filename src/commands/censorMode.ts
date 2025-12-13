@@ -1,4 +1,4 @@
-import { ChatInputCommandInteraction, SlashCommandBuilder } from 'discord.js';
+import { ChatInputCommandInteraction, InteractionContextType, PermissionFlagsBits, SlashCommandBuilder } from 'discord.js';
 import { CommandContainer } from './commands';
 import { updateGuildOptions } from '../service/guildOptions.service';
 import { CENSOR_MODES, type CensorMode } from '../db/models/guildOptions.model';
@@ -29,8 +29,11 @@ const censorModeCommand: CommandContainer = {
             .setDescription('The censor mode to apply')
             .setRequired(true)
             .setChoices(buildCensorModeChoices())
-        ),
-    
+        )
+        .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild)
+        .setContexts(InteractionContextType.Guild)
+        
+    ,
     async execute(interaction: ChatInputCommandInteraction) {
         const modeToSet = interaction.options.getString(OPTION_NAME);
         if (!modeToSet) throw new Error('Cannot set mode to nothing, it should be impossible for the user to input this.');
@@ -41,7 +44,7 @@ const censorModeCommand: CommandContainer = {
         });
 
         interaction.reply({
-            content: `Set the mode to ${updated.censorMode}`
+            content: `Set the server-wide censormode to ${updated.censorMode}`
         });
     }
 };

@@ -1,8 +1,11 @@
 import { CacheType, ChatInputCommandInteraction, Interaction, MessageFlags, REST, Routes, SharedSlashCommand } from 'discord.js';
-import { DISCORD_APP_ID, DISCORD_TOKEN } from '..';
+import { getEnvString } from '../envHelper';
 import setFaceFilterCommand from './setFaceFilter';
 import arieCommand from './arie';
 import censorModeCommand from './censorMode';
+
+export const DISCORD_TOKEN = getEnvString('DISCORD_TOKEN');
+export const DISCORD_APP_ID = getEnvString('DISCORD_APP_ID');
 
 const ERROR_MESSAGE = 'There was an unexpected error while executing this command!';
 const COMMAND_REGISTRY = new Map<string, CommandContainer>();
@@ -33,7 +36,7 @@ export async function deployApplicationCommands(commands: CommandContainer[]): P
         const data = await rest.put(Routes.applicationCommands(DISCORD_APP_ID), { body });
 
         if (Array.isArray(data)) {
-            console.log(`Successfully reloaded ${data.length} application (/) commands.`);
+            console.log(`Successfully deployed ${data.length} application (/) commands.`);
         } else {
             console.error('Discord replied with an unexpected response while updating commands');
         }

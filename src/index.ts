@@ -2,12 +2,11 @@ import { AttachmentBuilder, Client, Events, GatewayIntentBits, Message } from 'd
 import { getMatchingEntries, analyzeMessage, fetchBufferFromUrl } from './service/face-detect.service';
 import { Jimp } from 'jimp';
 import { applyEllipsesToImage } from './service/jimp-helper';
-import { migrate } from './db';
 import { getEnvString } from './envHelper';
-import { chatInputCommandRouter, deployAllAppCommands } from './commands/commands';
+import { chatInputCommandRouter } from './commands/commands';
+import { getGuildOptions } from './service/guildOptions.service';
 
-export const DISCORD_TOKEN = getEnvString('DISCORD_TOKEN');
-export const DISCORD_APP_ID = getEnvString('DISCORD_APP_ID');
+const DISCORD_TOKEN = getEnvString('DISCORD_TOKEN');
 
 const client = new Client({
 	intents: [
@@ -17,9 +16,18 @@ const client = new Client({
 	]
 });
 
+async function isCensorEnabledInGuild(message: Message): Promise<boolean> {
+	const guildId = message.guildId;
+	if (guildId === null) return false;
+
+	const options = await getGuildOptions(guildId);
+	return options !== null && options.censorMode !== 'none';
+}
+
 const messageArieFilter = async (message: Message) => {
 	if (message.author.bot) return;
 	if (message.attachments.size === 0) return;
+	if(!await isCensorEnabledInGuild(message)) return;
 	
 	const response = await analyzeMessage(message);
 	const arieMatches = getMatchingEntries(response, 'arie_pasma');
@@ -54,11 +62,4 @@ client.once(Events.ClientReady, (readyClient) => {
 client.on(Events.MessageCreate, messageArieFilter);
 client.on(Events.InteractionCreate, chatInputCommandRouter);
 
-(async () => {
-	if (process.env.NODE_ENV === 'dev') {
-		await migrate();
-		// await deployAllAppCommands();
-	};
-	client.login(DISCORD_TOKEN);
-})();
-
+client.login(DISCORD_TOKEN);
