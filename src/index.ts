@@ -1,20 +1,16 @@
-import { AttachmentBuilder, Client, Events, GatewayIntentBits, Message } from 'discord.js';
+import { AttachmentBuilder, Client, Events, GatewayIntentBits, Interaction, Message, MessageFlags, REST, Routes } from 'discord.js';
 import { getMatchingEntries, analyzeMessage, fetchBufferFromUrl } from './service/face-detect.service';
 import { Jimp } from 'jimp';
 import { applyEllipsesToImage } from './service/jimp-helper';
-import DbUser from './db/models/user.model';
 import { migrate } from './db';
-import GuildOptions from './db/models/guildOptions.model';
-import { createDefaultGuildOptions, getGuildOptions } from './service/guildOptions.service';
+import { getGuildOptions } from './service/guildOptions.service';
+import setFaceFilterCommand from './commands/setFaceFilter';
+import { getEnvString } from './envHelper';
+import { chatInputCommandRouter, deployApplicationCommands } from './commands/commands';
+import arieCommand from './commands/arie';
 
-(async () => {
-	await migrate();
-	// const created = await createDefaultGuildOptions('511285371003469824');
-	// console.log(created.get({ plain: true }));
-	const found = await getGuildOptions('511285371003469824');
-	console.log(found?.get({ plain: true }));
-
-})();
+export const DISCORD_TOKEN = getEnvString('DISCORD_TOKEN');
+export const DISCORD_APP_ID = getEnvString('DISCORD_APP_ID');
 
 const client = new Client({
 	intents: [
@@ -61,14 +57,12 @@ client.once(Events.ClientReady, (readyClient) => {
 	console.log(`Ready! Logged in as ${readyClient.user.tag}`);
 });
 
-client.on(Events.MessageCreate, 
-	messageArieFilter
-);
+client.on(Events.MessageCreate, messageArieFilter);
+client.on(Events.InteractionCreate, chatInputCommandRouter);
 
-const DISCORD_TOKEN = process.env.DISCORD_TOKEN;
+(async () => {
+	await migrate();
+	// await deployApplicationCommands([ setFaceFilterCommand, arieCommand ]);
+	client.login(DISCORD_TOKEN);
+})();
 
-if (DISCORD_TOKEN) {
-	client.login(process.env.DISCORD_TOKEN);
-} else {
-	console.error('No Discord token provided. Cannot start app without it, quitting...');
-}
