@@ -3,6 +3,7 @@ import { getEnvString } from '../envHelper';
 import setFaceFilterCommand from './setFaceFilter';
 import arieCommand from './arie';
 import censorModeCommand from './censorMode';
+import { tryIncrementMetric } from '@/service/metrics.service';
 
 export const DISCORD_TOKEN = getEnvString('DISCORD_TOKEN');
 export const DISCORD_APP_ID = getEnvString('DISCORD_APP_ID');
@@ -79,6 +80,7 @@ export const chatInputCommandRouter = async (interaction: Interaction) => {
             console.error(`Received command with no matching handler: /${interaction.commandName}`);
             await contextAwareReply(interaction, ERROR_MESSAGE);
         } else {
+            tryIncrementMetric(interaction.user.id, interaction.guildId!, `cmd_${command.data.name}`);
             await command.execute(interaction);
         }
     } catch (error) {

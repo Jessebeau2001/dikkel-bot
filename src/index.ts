@@ -5,6 +5,7 @@ import { applyEllipsesToImage } from './service/jimp-helper';
 import { getEnvString } from './envHelper';
 import { chatInputCommandRouter } from './commands/commands';
 import { getGuildOptions } from './service/guildOptions.service';
+import { incrementMetric } from './service/metrics.service';
 
 const DISCORD_TOKEN = getEnvString('DISCORD_TOKEN');
 
@@ -57,6 +58,10 @@ const messageArieFilter = async (message: Message) => {
 
 client.once(Events.ClientReady, (readyClient) => {
 	console.log(`Ready! Logged in as ${readyClient.user.tag}`);
+});
+
+client.on(Events.ShardError, (error) => {
+	console.error('A http error occurred during api call:', error);
 });
 
 client.on(Events.MessageCreate, messageArieFilter);
