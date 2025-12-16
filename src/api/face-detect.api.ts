@@ -66,6 +66,10 @@ const EntrySchema = z.union([SuccessEntrySchema, ErrorEntrySchema]);
 
 const ApiResponseSchema = z.record(z.string(), EntrySchema);
 
+// ===============================
+// TODO: These models need cleanup
+// ===============================
+
 export type MatchDetail = z.infer<typeof MatchDetailSchema>;
 export type SuccessEntry = z.infer<typeof SuccessEntrySchema>;
 export type ErrorEntry = z.infer<typeof ErrorEntrySchema>;

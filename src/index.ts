@@ -1,5 +1,4 @@
 import { AttachmentBuilder, Client, Events, GatewayIntentBits, Message } from 'discord.js';
-import { getMatchingEntries, analyzeMessage, fetchBufferFromUrl, detailOf } from './service/face-detect.service';
 import { Jimp } from 'jimp';
 import { applyEllipsesToImage } from './service/jimp-helper';
 import { getEnvString } from './envHelper';
@@ -7,7 +6,8 @@ import { chatInputCommandRouter } from './commands/commands';
 import { getGuildOptions } from './service/guildOptions.service';
 import AnalysisResult from './db/models/analysisResult.model';
 import { MatchDetail } from './api/face-detect.api';
-import { bufferAnalyzeUrl } from './service/analysis.service';
+import { analyzeMessage, bufferAnalyzeUrl, fetchBufferFromUrl, getMatchingEntries, isDetailMatch } from './service/analysis.service';
+import { isImageContentType } from './service/discord-helper';
 
 const DISCORD_TOKEN = getEnvString('DISCORD_TOKEN');
 
@@ -27,19 +27,9 @@ async function isCensorEnabledInGuild(message: Message): Promise<boolean> {
 	return options !== null && options.censorMode !== 'none';
 }
 
-/**
- * This is what content types can look like
- * image/jpeg, image/webp, video/mp4, image/svg+xml; charset=utf-8
- */
-function isImageMime(mimeType: string | null): boolean {
-	if (!mimeType) return false;
-	const type = mimeType.split('/')[0];
-	return type === 'image';
-}
-
 function getAttachmentUrls(message: Message): string[] {
 	return message.attachments
-		.filter(attachment => isImageMime(attachment.contentType))
+		.filter(attachment => isImageContentType(attachment.contentType))
 		.map(attachment => attachment.url);
 }
 
@@ -56,6 +46,7 @@ async function createMarkedAttachment(details: MatchDetail[], buffer: Buffer) {
 	});
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const messageArieFilter = async (message: Message) => {
 	if (message.author.bot) return;
 	if (message.attachments.size === 0) return;
@@ -89,7 +80,7 @@ const messageArieFilterCached = async (message: Message) => {
 
 	for (const url of urls) {
 		const { details, buffer } = await bufferAnalyzeUrl(url);
-		const onlyArie = details !== null ? details.filter(detailOf('arie_pasma')) : [];
+		const onlyArie = details !== null ? details.filter(isDetailMatch('arie_pasma')) : [];
 		if (onlyArie.length > 0) {
 			const attach = await createMarkedAttachment(onlyArie, buffer);
 			replyAttachments.push(attach);
@@ -102,7 +93,8 @@ const messageArieFilterCached = async (message: Message) => {
 			files: replyAttachments
 		});
 	}
-}
+};
+
 client.once(Events.ClientReady, (readyClient) => {
 	console.log(`Ready! Logged in as ${readyClient.user.tag}`);
 });
