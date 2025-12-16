@@ -40,6 +40,10 @@ export async function analyzeAttachments(attachments: Collection<string, Attachm
 	return await analyzeUrl(urls);
 }
 
+export const detailOf = (name: string, threshold: number = ARIE_THRESHOLD) => (match: MatchDetail) => {
+	return match.name === name && match.distance < threshold;
+};
+
 export function getMatchingEntries(
 	response: ApiResponse,
 	name: string = 'arie_pasma',
@@ -50,7 +54,7 @@ export function getMatchingEntries(
   for (const [url, entry] of Object.entries(response)) {
     // Filter matches inside each entry
 	if ('matches' in entry) {
-		const filteredMatches = entry.matches.filter(match => match.name === name && match.distance < threshold);
+		const filteredMatches = entry.matches.filter(detailOf(name, threshold));
 		if (filteredMatches.length > 0) {
 			result[url] = filteredMatches;
 		}

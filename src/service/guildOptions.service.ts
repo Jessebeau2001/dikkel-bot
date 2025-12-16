@@ -42,6 +42,7 @@ export async function getGuildOptions(guildId: string) {
     return found !== null ? cache(found) : null;
 }
 
+// Currently this succeeds (BUT THROWS) when a guild option is created for the first time when setting value
 export async function updateGuildOptions(guildId: string, update: GuildOptionsUpdate): Promise<GuildOptions> {
     let options = await getGuildOptions(guildId);
     if (options === null) options = await createDefaultGuildOptions(guildId);

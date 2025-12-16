@@ -1,4 +1,5 @@
 /* eslint-disable camelcase */
+import axios from 'axios';
 import * as z from 'zod';
 
 const HOST = initEnvKey('FACE_API_HOST', 'localhost');
@@ -70,6 +71,13 @@ export type SuccessEntry = z.infer<typeof SuccessEntrySchema>;
 export type ErrorEntry = z.infer<typeof ErrorEntrySchema>;
 export type ApiResponse = z.infer<typeof ApiResponseSchema>;
 
+export class AnalysisError extends Error {
+    constructor(error: ErrorEntry) {
+        super(`The API returned an error while analyzing: ${error.error}`);
+        this.name = 'AnalysisError';
+    }
+}
+
 export function isSuccess(entry: SuccessEntry | ErrorEntry): entry is SuccessEntry {
     return 'matches' in entry;
 }
@@ -105,6 +113,26 @@ export async function analyzeUrl(payload: string): Promise<ApiResponse> {
     await requireOk(response);
     const json = await response.json();
     return ApiResponseSchema.parse(json);
+}
+
+export async function analyzeStream(buffer: Buffer): Promise<SuccessEntry | ErrorEntry> {
+    const response = await axios.post(`${URL}/analyze/stream`, buffer, {
+        headers: {
+            'Content-Type': 'application/octet-stream',
+            'Content-Length': buffer.length
+        }
+    });
+
+    return EntrySchema.parse(response.data);
+}
+
+export async function analyzeStreamOrThrow(buffer: Buffer): Promise<MatchDetail[]> {
+    const response = await analyzeStream(buffer);
+    if ('error' in response) {
+        throw new AnalysisError(response);
+    } else {
+        return response.matches;
+    }
 }
 
 export async function fetchHealth() {
