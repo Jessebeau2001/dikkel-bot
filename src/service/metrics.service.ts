@@ -2,7 +2,8 @@ import sequelize from '@/db';
 import UserMetric from '@/db/models/userMetric.model';
 import FlushingBuffer from '@/flushingBuffer';
 import { Transaction } from 'sequelize';
-import app from '..';
+import events from '@/app.events';
+import { getRandomValue } from '@/utils';
 
 interface MetricInfo {
     userId: string;
@@ -13,6 +14,16 @@ interface MetricInfo {
 interface MetricUpdate extends MetricInfo {
     value: number
 }
+
+const BUFFER = new FlushingBuffer({
+    maxBatchSize: 50,
+    flushIntervalMs: 1000 * 10,
+    flush: writeAll
+});
+
+events.onShutdown(async () => {
+    await BUFFER.shutdown();
+});
 
 function hashMetric({ userId, guildId, key }: MetricInfo): string {
     return `${userId}:${guildId}:${key}`;
@@ -35,7 +46,7 @@ async function incrementOrCreate({ guildId, userId, key, value }: MetricUpdate, 
     }
 }
 
-const writeAll = async (values: MetricInfo[]) => {
+async function writeAll(values: MetricInfo[]) {
     console.log('Writing buffer...');
 
     const map = new Map<string, MetricUpdate>();
@@ -53,13 +64,7 @@ const writeAll = async (values: MetricInfo[]) => {
             await incrementOrCreate(update, t);
         };
     });
-};
-
-const BUFFER = new FlushingBuffer({
-    maxBatchSize: 50,
-    flushIntervalMs: 1000 * 10,
-    flush: writeAll
-});
+}
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 async function incrementRaw(userId: string, guildId: string, metric: string) {
@@ -90,6 +95,16 @@ export async function tryIncrementMetric(userId: string, guildId: string, key: s
     }
 }
 
-app.onShutdown(async () => {
-    await BUFFER.shutdown();
-});
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+function simpleTest() {
+    const users = [ 'test_user_1', 'test_user_2', 'test_user_3', 'test_user_4', ];
+    const guilds = [ 'test_guild_1', 'test_guild_2', 'test_guild_3' ];
+    const keys = [ 'test_cmd_1', 'test_cmd_2', 'test_cmd_3' ];
+
+    for (let i = 0; i < 50; i++) {
+		const guild = getRandomValue(guilds);
+		const user = getRandomValue(users);
+		const metric = getRandomValue(keys);
+		incrementMetric(user, guild, metric);
+	}
+}
