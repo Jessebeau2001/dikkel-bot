@@ -1,16 +1,22 @@
-import { JimpImage, RectBounds } from '@/service/jimp-helper';
+import { JimpImage, Rect } from '@/lib/jimp-helper';
 
-export function drawEllipseOutline(
+export function drawEllipse(
   img: JimpImage,
-  bounds: RectBounds,
+  size: Rect,
   color: number = 0xffffffff,
-  thickness: number = 1
+  weight: number = 1
 ): void {
-  const [x1, y1, x2, y2] = bounds;
+  // Calc from rect
+  const x1 = size.x;
+  const y1 = size.y;
+  
+  const w = size.width;
+  const h = size.height;
 
-  const w = x2 - x1;
-  const h = y2 - y1;
+  const x2 = x1 + w;
+  const y2 = y1 + h;
 
+  // Circle properties
   const rx = w / 2;
   const ry = h / 2;
 
@@ -21,8 +27,8 @@ export function drawEllipseOutline(
   const ry2 = ry * ry;
 
   // Thickness defined as inner ellipse
-  const rxInner = rx - thickness;
-  const ryInner = ry - thickness;
+  const rxInner = rx - weight;
+  const ryInner = ry - weight;
 
   const rxInner2 = rxInner * rxInner;
   const ryInner2 = ryInner * ryInner;
@@ -50,4 +56,23 @@ export function drawEllipseOutline(
       }
     }
   }
+}
+
+export function drawEllipses(
+	image: JimpImage,
+	area: Rect | Rect[],
+	color: number = 0xFF0000FF,
+	weight: number | undefined = undefined
+) {
+	const rects = Array.isArray(area) ? area : [ area ];
+	const stroke = weight ?? Math.min(image.height, image.width) / 200;
+
+	for (const rect of rects) {
+		drawEllipse(
+			image,
+			rect,
+			color,
+			stroke
+		);
+	}
 }

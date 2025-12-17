@@ -1,12 +1,15 @@
 import { AttachmentBuilder, Client, Events, GatewayIntentBits, Message } from 'discord.js';
 import { Jimp } from 'jimp';
-import { applyEllipsesToImage } from './service/jimp-helper';
+import { areaToRect } from './lib/jimp-helper';
 import { getEnvString } from './lib/utils';
 import { chatInputCommandRouter } from './commands/commands';
 import { getGuildOptions } from './service/guildOptions.service';
 import { MatchDetail } from './api/face-detect.api';
-import { analyzeMessage, bufferAnalyzeUrl, fetchBufferFromUrl, getMatchingEntries, isDetailMatch } from './service/analysis.service';
+import { bufferAnalyzeUrl, isDetailMatch } from './service/analysis.service';
 import { isImageContentType } from './service/discord-helper';
+import { CensorMode } from './db/models/guildOptions.model';
+import { drawEllipses } from './plugins/ellipse';
+import { pixelateRect } from './plugins/blur';
 
 const DISCORD_TOKEN = getEnvString('DISCORD_TOKEN');
 
@@ -18,6 +21,7 @@ const client = new Client({
 	]
 });
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 async function isCensorEnabledInGuild(message: Message): Promise<boolean> {
 	const guildId = message.guildId;
 	if (guildId === null) return false;
@@ -32,12 +36,24 @@ function getAttachmentUrls(message: Message): string[] {
 		.map(attachment => attachment.url);
 }
 
-async function createMarkedAttachment(details: MatchDetail[], buffer: Buffer) {
-	const bounds = details.map(detail => detail.location);
+async function createCensoredAttachment(
+	details: MatchDetail[],
+	buffer: Buffer,
+	mode: Exclude<CensorMode, 'none'>
+) {
+	const areas = details.map(detail => areaToRect(detail.location));
 	const image = await Jimp.read(buffer);
 	
 	const RED = 0xFF0000FF;
-	applyEllipsesToImage(image, bounds, RED);
+
+	switch (mode) {
+		case 'select':
+			await drawEllipses(image, areas, RED);
+			break;
+		case 'blur':
+			await pixelateRect(image, areas);
+			break;
+	}
 
 	const replyBuffer = await image.getBuffer('image/png');
 	return new AttachmentBuilder(replyBuffer, {
@@ -45,34 +61,13 @@ async function createMarkedAttachment(details: MatchDetail[], buffer: Buffer) {
 	});
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const messageArieFilter = async (message: Message) => {
-	if (message.author.bot) return;
-	if (message.attachments.size === 0) return;
-	if(!await isCensorEnabledInGuild(message)) return;
-	
-	const response = await analyzeMessage(message);
-	const arieMatches = getMatchingEntries(response, 'arie_pasma');
-
-	if (Object.values(arieMatches).length === 0) return;
-
-	const replyAttachments = [];
-	for (const [url, details] of Object.entries(arieMatches)) {
-		const buffer = await fetchBufferFromUrl(url);
-		const attach = await createMarkedAttachment(details, buffer);
-		replyAttachments.push(attach);
-	}
-
-	await message.reply({
-		content: 'Godverdomme, das Arie!',
-		files: replyAttachments
-	});
-};
-
 const messageArieFilterCached = async (message: Message) => {
 	if (message.author.bot) return;
 	if (message.attachments.size === 0) return;
-	if(!await isCensorEnabledInGuild(message)) return;
+	if (message.guildId === null) return;
+
+	const options = await getGuildOptions(message.guildId);
+	if(options === null || options.censorMode === null || options.censorMode === 'none') return;
 
 	const urls = getAttachmentUrls(message);
 	const replyAttachments: AttachmentBuilder[] = [];
@@ -81,7 +76,7 @@ const messageArieFilterCached = async (message: Message) => {
 		const { details, buffer } = await bufferAnalyzeUrl(url);
 		const onlyArie = details !== null ? details.filter(isDetailMatch('arie_pasma')) : [];
 		if (onlyArie.length > 0) {
-			const attach = await createMarkedAttachment(onlyArie, buffer);
+			const attach = await createCensoredAttachment(onlyArie, buffer, options.censorMode);
 			replyAttachments.push(attach);
 		}
 	}

@@ -7,7 +7,7 @@ const PORT = initEnvKey('FACE_API_PORT', 5000);
 const URL = `http://${HOST}:${PORT}`;
 
 console.log(`pylw-api configured at ${URL}`);
-testConnection();
+// testConnection();
 
 function initEnvKey<T extends string | number | boolean>(
     key: string,

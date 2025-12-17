@@ -25,6 +25,6 @@ const appShutdown = async () => {
 
 process.on('SIGINT', appShutdown);
 process.on('SIGTERM', appShutdown);
-process.on('uncaughtException', appShutdown);
+// process.on('uncaughtException', appShutdown);
 
 export default events;
