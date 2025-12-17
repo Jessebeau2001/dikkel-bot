@@ -1,84 +1,84 @@
-type FlushCallback<T> = (items: T[]) => void | Promise<void>
+type Writer<T> = (items: T[]) => void | Promise<void>
 
 interface BufferOptions<T> {
   maxBatchSize?: number;
   flushIntervalMs?: number;
-  flush: FlushCallback<T>;
+  writer: Writer<T>;
 }
 
-class FlushingBuffer<T> {
+class BufferedWriter<T> {
     private _buffer: T[] = [];
     private _maxBatchSize: number;
-    private _flush: FlushCallback<T>;
+    private _writer: Writer<T>;
     
     private _timer?: NodeJS.Timeout;
-    private _isFlushing = false;
-    private _isFlushScheduled = false;
+    private _isWriting = false;
+    private _isWriteScheduled = false;
 
     constructor({
         maxBatchSize = 50,
         flushIntervalMs,
-        flush,
+        writer: writer,
     }: BufferOptions<T>) {
         this._maxBatchSize = maxBatchSize;
-        this._flush = flush;
+        this._writer = writer;
 
         if (flushIntervalMs !== undefined && flushIntervalMs > 0) {
             this._timer = setInterval(
-                () => this.scheduleFlush(),
+                () => this.scheduleWrite(),
                 flushIntervalMs
             );
         }
     }
 
-    private checkAndFlush() {
+    private checkAndWrite() {
         if (this._maxBatchSize > 0 && this._buffer.length >= this._maxBatchSize) {
-            this.scheduleFlush();
+            this.scheduleWrite();
         }
     }
 
-    private scheduleFlush() {
-        if (this._isFlushScheduled) return;
-        this._isFlushScheduled = true;
+    private scheduleWrite() {
+        if (this._isWriteScheduled) return;
+        this._isWriteScheduled = true;
 
-        setImmediate(() => this.flush());
+        setImmediate(() => this.write());
     }
 
-    private async flush() {
-        if (this._isFlushing) return;
+    private async write() {
+        if (this._isWriting) return;
         if (this._buffer.length === 0) {
-            this._isFlushScheduled = false;
+            this._isWriteScheduled = false;
             return;
         }
 
-        this._isFlushing = true;
-        this._isFlushScheduled = false;
+        this._isWriting = true;
+        this._isWriteScheduled = false;
 
         const batch = this._buffer;
         this._buffer = [];
         
         try {
-            await this._flush?.(batch);
+            await this._writer?.(batch);
             // TODO: What to do on actual error
         } finally {
-            this._isFlushing = false;
+            this._isWriting = false;
         }
 
         // If new items arrived during flush, flush again
         if (this._buffer.length > 0) {
-            this.scheduleFlush();
+            this.scheduleWrite();
         }
     }
 
     push(value: T) {
         this._buffer.push(value);
-        this.checkAndFlush();
+        this.checkAndWrite();
     }
 
     async shutdown() {
         if (this._timer) clearInterval(this._timer);
-        await this.flush();
+        await this.write();
     }
 }
 
-export default FlushingBuffer;
+export default BufferedWriter;

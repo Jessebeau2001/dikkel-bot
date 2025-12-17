@@ -1,5 +1,5 @@
 // import GuildOptions from '@/db/models/guildOptions.model';
-import SimpleLRUCache from '../cache';
+import SimpleLRUCache from '../lib/cache';
 import GuildOptions, { GuildOptionsUpdate } from '../db/models/guildOptions.model';
 import { UniqueConstraintError } from 'sequelize';
 

@@ -1,9 +1,9 @@
 import sequelize from '@/db';
 import UserMetric from '@/db/models/userMetric.model';
-import FlushingBuffer from '@/flushingBuffer';
+import BufferedWriter from '@/lib/bufferedWriter';
 import { Transaction } from 'sequelize';
 import events from '@/app.events';
-import { getRandomValue } from '@/utils';
+import { getRandomValue } from '@/lib/utils';
 
 interface MetricInfo {
     userId: string;
@@ -15,10 +15,10 @@ interface MetricUpdate extends MetricInfo {
     value: number
 }
 
-const BUFFER = new FlushingBuffer({
+const BUFFER = new BufferedWriter({
     maxBatchSize: 50,
     flushIntervalMs: 1000 * 10,
-    flush: writeAll
+    writer: writeAll
 });
 
 events.onShutdown(async () => {

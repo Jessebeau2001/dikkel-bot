@@ -1,7 +1,7 @@
 import { AttachmentBuilder, Client, Events, GatewayIntentBits, Message } from 'discord.js';
 import { Jimp } from 'jimp';
 import { applyEllipsesToImage } from './service/jimp-helper';
-import { getEnvString } from "./utils";
+import { getEnvString } from './lib/utils';
 import { chatInputCommandRouter } from './commands/commands';
 import { getGuildOptions } from './service/guildOptions.service';
 import { MatchDetail } from './api/face-detect.api';
