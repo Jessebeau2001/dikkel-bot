@@ -2,10 +2,7 @@ import { Message, OmitPartialGroupDMChannel } from 'discord.js';
 
 /**
  * This is what content types can look like
- * 'image/jpeg'
- * 'image/webp'
- * 'video/mp4'
- * 'image/svg+xml; charset=utf-8'
+ * image/jpeg, image/webp, video/mp4, image/svg+xml; charset=utf-8
  */
 export function isImageContentType(contentType: string | null): boolean {
 	if (!contentType) return false;

@@ -4,7 +4,6 @@ import { applyEllipsesToImage } from './service/jimp-helper';
 import { getEnvString } from './envHelper';
 import { chatInputCommandRouter } from './commands/commands';
 import { getGuildOptions } from './service/guildOptions.service';
-import AnalysisResult from './db/models/analysisResult.model';
 import { MatchDetail } from './api/face-detect.api';
 import { analyzeMessage, bufferAnalyzeUrl, fetchBufferFromUrl, getMatchingEntries, isDetailMatch } from './service/analysis.service';
 import { isImageContentType } from './service/discord-helper';
@@ -108,15 +107,40 @@ client.on(Events.InteractionCreate, chatInputCommandRouter);
 
 client.login(DISCORD_TOKEN);
 
-// AnalysisResult.create({
-// 	result: { michael: 'isOokDik' },
-// 	contentHash: crypto.randomUUID()
-// });
+
+// ===== MANUAL SYSTEM =====
+
+type Hook = () => void | Promise<void>
+
+// Doing this manually as node:events has no async support
+const SHUTDOWN_HOOKS = new Set<Hook>();
+
+const app = {
+	onShutdown: (hook: Hook) => {
+		SHUTDOWN_HOOKS.add(hook);
+
+		return () => {
+			SHUTDOWN_HOOKS.delete(hook);
+		};
+	}
+};
+
+const appShutdown = async () => {
+	for (const hook of SHUTDOWN_HOOKS) {
+		try {
+			await hook();
+		} catch (error) {
+			console.error('CRITICAL: Failed to run shutdown task!', error);
+		}
+	}
+};
+
+process.on('SIGINT', appShutdown);
+process.on('SIGTERM', appShutdown);
+process.on('uncaughtException', appShutdown);
+
+export default app;
 
 (async () => {
-	const found = await AnalysisResult.findByPk('d04cc7a2-9dcc-485c-ae18-be81dbd40347');
-	if (found !== null) {
-		console.log(found.get({ plain: true }));
-		console.log(found.result);
-	}
+
 })();
