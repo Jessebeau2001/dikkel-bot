@@ -1,7 +1,7 @@
 import { AttachmentBuilder, Client, Events, GatewayIntentBits, Message } from 'discord.js';
 import { Jimp } from 'jimp';
 import { applyEllipsesToImage } from './service/jimp-helper';
-import { getEnvString } from './envHelper';
+import { getEnvString } from "./utils";
 import { chatInputCommandRouter } from './commands/commands';
 import { getGuildOptions } from './service/guildOptions.service';
 import { MatchDetail } from './api/face-detect.api';
@@ -106,41 +106,3 @@ client.on(Events.MessageCreate, messageArieFilterCached);
 client.on(Events.InteractionCreate, chatInputCommandRouter);
 
 client.login(DISCORD_TOKEN);
-
-
-// ===== MANUAL SYSTEM =====
-
-type Hook = () => void | Promise<void>
-
-// Doing this manually as node:events has no async support
-const SHUTDOWN_HOOKS = new Set<Hook>();
-
-const app = {
-	onShutdown: (hook: Hook) => {
-		SHUTDOWN_HOOKS.add(hook);
-
-		return () => {
-			SHUTDOWN_HOOKS.delete(hook);
-		};
-	}
-};
-
-const appShutdown = async () => {
-	for (const hook of SHUTDOWN_HOOKS) {
-		try {
-			await hook();
-		} catch (error) {
-			console.error('CRITICAL: Failed to run shutdown task!', error);
-		}
-	}
-};
-
-process.on('SIGINT', appShutdown);
-process.on('SIGTERM', appShutdown);
-process.on('uncaughtException', appShutdown);
-
-export default app;
-
-(async () => {
-
-})();

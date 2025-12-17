@@ -8,7 +8,7 @@ COPY src/ ./src
 RUN npm install
 RUN npm run build:slim
 
-FROM node:20-alpine
+FROM node:25-alpine
 
 WORKDIR /app
 

@@ -1,5 +1,5 @@
 import { CacheType, ChatInputCommandInteraction, Interaction, MessageFlags, REST, Routes, SharedSlashCommand } from 'discord.js';
-import { getEnvString } from '../envHelper';
+import { getEnvString } from '@/utils';
 import setFaceFilterCommand from './setFaceFilter';
 import arieCommand from './arie';
 import censorModeCommand from './censorMode';
